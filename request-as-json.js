@@ -1,32 +1,46 @@
+//var checkJSON = require("./node_modules/request-json.js");
+
+var prompt = require('prompt');
 var request = require('request');
+var colors = require('colors');
 
-function requestJson (url, callback){
-    request(url, function(err, res) {
-            if(err) {
-                callback(err);  
-                console.log("Invalid url");
-            }
-            else {
-                try {
-                    var parsed = JSON.parse(res.body);
-                    callback(null, parsed);
-                    console.log("If you see this, the JSON was parsed properly");
+function getWeather() {
+    prompt.get('location', function(err, city) {
+        if (err) {
+            console.log('there was an error');
+        }
+        else {
+            var myUrl = 'https://maps.googleapis.com/maps/api/geocode/json?address=' + city.location;
+            //cityLocation = city.location;
+            //console.log(city.location);
+            request(myUrl, function(err, res) {
+                if (err) {
+                    console.log('there was an error');
                 }
-                catch(err) {
-                    callback(err);
-                    //notify our developers
-                    console.log("If you see this, there was an error with parsing the JSON ");
+                else {
+                    var lat = JSON.parse(res.body).results[0].geometry.location.lat;
+                    var lon = JSON.parse(res.body).results[0].geometry.location.lng;
+                    var weatherURL = 'https://api.forecast.io/forecast/' + '0db24492b20dd17d062597f6b31ae860/' + lat.toFixed(4) + ',' + lon.toFixed(4);
+        //console.log(weatherURL);
+                    request(weatherURL, function(err, response) {
+                        if (err) {
+                            console.log('there was an error');
+                        }
+                        else {
+                            var weather = (JSON.parse(response.body));
+                            //console.log(weather);
+                            /*weather.forEach(function (item){
+                                console.log(weather.daily.data.summary.rainbow);
+                            })*/
+                                    for (var i=0; i < 5; i++){
+                                        console.log(weather.daily.data[i].summary.rainbow);
+                                    }
+                        }
+                    })
                 }
-            }   
-    })   
-}
+            })
+        }
+    })
+};
 
-
-requestJson('https://api.wheretheiss.at/v1/satellites/25544', function (err, res) {
-    if(err) {
-        console.log('There was a problem getting your JSON');
-    } else {
-        console.log("Everything worked, this is the result: " + res.name);
-        //console.log(res);
-    }
-})
+getWeather();
